@@ -3,7 +3,6 @@ package com.freewheelin.pulley.user.infrastructure.persistence
 import com.freewheelin.pulley.user.domain.model.User
 import com.freewheelin.pulley.user.domain.port.UserRepository
 import org.springframework.stereotype.Repository
-import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 /**
