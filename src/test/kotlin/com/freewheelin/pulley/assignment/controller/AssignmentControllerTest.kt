@@ -9,7 +9,6 @@ import com.freewheelin.pulley.common.exception.ErrorCode
 import com.freewheelin.pulley.common.exception.NotFoundException
 import com.freewheelin.pulley.common.infrastructure.security.SecurityService
 import com.ninjasquad.springmockk.MockkBean
-import io.mockk.MockKMatcherScope
 import io.mockk.every
 import io.mockk.verify
 import org.junit.jupiter.api.Test
@@ -65,7 +64,7 @@ class AssignmentControllerTest {
         
         // When & Then
         mockMvc.perform(
-            post("/assignments")
+            post("/piece/{pieceId}", 2001)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
         )
@@ -113,7 +112,7 @@ class AssignmentControllerTest {
         
         // When & Then
         mockMvc.perform(
-            post("/assignments")
+            post("/piece/{pieceId}", 2001)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
         )
@@ -141,7 +140,7 @@ class AssignmentControllerTest {
 
         // When & Then
         mockMvc.perform(
-            post("/assignments")
+            post("/piece/{pieceId}", 2001)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidRequest)
         )
@@ -162,7 +161,7 @@ class AssignmentControllerTest {
         
         // When & Then
         mockMvc.perform(
-            post("/assignments")
+            post("/piece/{pieceId}", 2001)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
         )
@@ -181,7 +180,7 @@ class AssignmentControllerTest {
         
         // When & Then
         mockMvc.perform(
-            post("/assignments")
+            post("/piece/{pieceId}", 2001)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
         )
@@ -200,7 +199,7 @@ class AssignmentControllerTest {
 
         // When & Then
         mockMvc.perform(
-            post("/assignments")
+            post("/piece/{pieceId}", 2001)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
         )
@@ -227,7 +226,7 @@ class AssignmentControllerTest {
         
         // When & Then
         mockMvc.perform(
-            post("/assignments")
+            post("/piece/{pieceId}", 2001)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
         )
@@ -253,7 +252,7 @@ class AssignmentControllerTest {
         
         // When & Then
         mockMvc.perform(
-            post("/assignments")
+            post("/piece/{pieceId}", 2001)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
         )
@@ -285,7 +284,7 @@ class AssignmentControllerTest {
         
         // When & Then
         mockMvc.perform(
-            post("/assignments")
+            post("/piece/{pieceId}", 2001)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
         )
@@ -307,7 +306,7 @@ class AssignmentControllerTest {
         
         // When & Then
         mockMvc.perform(
-            post("/assignments")
+            post("/piece/{pieceId}", 2001)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidJson)
         )
@@ -324,8 +323,7 @@ class AssignmentControllerTest {
         
         // When & Then
         mockMvc.perform(
-            post("/assignments")
-                // Content-Type 헤더 없음
+            post("/piece/{pieceId}", 2001)// Content-Type 헤더 없음
                 .content(objectMapper.writeValueAsString(requestDto))
         )
             .andExpect(status().isUnsupportedMediaType)
