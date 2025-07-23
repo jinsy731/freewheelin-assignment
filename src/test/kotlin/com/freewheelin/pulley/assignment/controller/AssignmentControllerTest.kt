@@ -51,7 +51,6 @@ class AssignmentControllerTest {
         every { securityService.requireCurrentUserId() } returns 1L
         
         val requestDto = AssignmentCreateRequestDto(
-            pieceId = 2001L,
             studentIds = listOf(101L, 102L, 103L)
         )
         
@@ -99,7 +98,6 @@ class AssignmentControllerTest {
         every { securityService.requireCurrentUserId() } returns 1L
         
         val requestDto = AssignmentCreateRequestDto(
-            pieceId = 2001L,
             studentIds = listOf(101L, 102L, 103L, 104L)
         )
         
@@ -159,13 +157,12 @@ class AssignmentControllerTest {
     fun `잘못된 요청 - pieceId가 음수인 경우 400 Bad Request`() {
         // Given
         val requestDto = AssignmentCreateRequestDto(
-            pieceId = -1L, // 음수
             studentIds = listOf(101L, 102L)
         )
         
         // When & Then
         mockMvc.perform(
-            post("/piece/{pieceId}", 2001)
+            post("/piece/{pieceId}", -1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
         )
@@ -178,7 +175,6 @@ class AssignmentControllerTest {
     fun `잘못된 요청 - studentIds가 빈 리스트인 경우 400 Bad Request`() {
         // Given
         val requestDto = AssignmentCreateRequestDto(
-            pieceId = 2001L,
             studentIds = emptyList() // 빈 리스트
         )
         
@@ -196,7 +192,6 @@ class AssignmentControllerTest {
     fun `잘못된 요청 - studentIds에 음수가 포함된 경우 400 Bad Request`() {
         // Given
         val requestDto = AssignmentCreateRequestDto(
-            pieceId = 2001L,
             studentIds = listOf(101L, -1L, 103L) // 음수 포함
         )
         every { securityService.requireCurrentUserId() } returns 1L
@@ -217,7 +212,6 @@ class AssignmentControllerTest {
         every { securityService.requireCurrentUserId() } returns 1L
         
         val requestDto = AssignmentCreateRequestDto(
-            pieceId = 2001L,
             studentIds = listOf(101L, 102L)
         )
         
@@ -245,7 +239,6 @@ class AssignmentControllerTest {
         every { securityService.requireCurrentUserId() } returns 1L
         
         val requestDto = AssignmentCreateRequestDto(
-            pieceId = 999L, // 존재하지 않는 학습지
             studentIds = listOf(101L, 102L)
         )
         
@@ -256,7 +249,7 @@ class AssignmentControllerTest {
         
         // When & Then
         mockMvc.perform(
-            post("/piece/{pieceId}", 2001)
+            post("/piece/{pieceId}", 999)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
         )
@@ -271,7 +264,6 @@ class AssignmentControllerTest {
         every { securityService.requireCurrentUserId() } returns 1L
         
         val requestDto = AssignmentCreateRequestDto(
-            pieceId = 2001L,
             studentIds = listOf(101L)
         )
         
@@ -321,7 +313,6 @@ class AssignmentControllerTest {
     fun `Content-Type이 없는 경우 - 415 Unsupported Media Type`() {
         // Given
         val requestDto = AssignmentCreateRequestDto(
-            pieceId = 2001L,
             studentIds = listOf(101L, 102L)
         )
         

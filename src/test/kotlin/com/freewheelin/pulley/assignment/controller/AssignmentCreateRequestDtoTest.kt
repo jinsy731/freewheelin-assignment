@@ -9,7 +9,6 @@ class AssignmentCreateRequestDtoTest {
     fun `생성자 - 정상 생성 테스트`() {
         // Given & When & Then
         AssignmentCreateRequestDto(
-            pieceId = 100L,
             studentIds = listOf(10L, 20L, 30L)
         )
     }
@@ -18,7 +17,6 @@ class AssignmentCreateRequestDtoTest {
     fun `생성자 - 단일 학생으로 정상 생성`() {
         // Given & When & Then
         AssignmentCreateRequestDto(
-            pieceId = 100L,
             studentIds = listOf(10L)
         )
     }
@@ -27,13 +25,13 @@ class AssignmentCreateRequestDtoTest {
     fun `toCommand - 정상 변환 테스트`() {
         // Given
         val dto = AssignmentCreateRequestDto(
-            pieceId = 100L,
             studentIds = listOf(10L, 20L, 30L)
         )
         val teacherId = 1L
+        val pieceId = 100L
         
         // When
-        val applicationRequest = dto.toCommand(teacherId)
+        val applicationRequest = dto.toCommand(teacherId, pieceId)
         
         // Then
         assertEquals(1L, applicationRequest.teacherId)
@@ -45,13 +43,13 @@ class AssignmentCreateRequestDtoTest {
     fun `toCommand - 단일 학생 변환 테스트`() {
         // Given
         val dto = AssignmentCreateRequestDto(
-            pieceId = 100L,
             studentIds = listOf(10L)
         )
         val teacherId = 1L
+        val pieceId = 100L
         
         // When
-        val applicationRequest = dto.toCommand(teacherId)
+        val applicationRequest = dto.toCommand(teacherId, pieceId)
         
         // Then
         assertEquals(1L, applicationRequest.teacherId)
