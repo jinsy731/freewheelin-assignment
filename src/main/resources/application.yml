@@ -4,7 +4,7 @@ spring:
 
   # H2 Database 설정
   datasource:
-    url: jdbc:h2:mem:demo2db;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:pulleydb;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
     password:
