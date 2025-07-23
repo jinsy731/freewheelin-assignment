@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.freewheelin.pulley.assignment.application.port.AssignmentCreateRequest
 import com.freewheelin.pulley.assignment.application.port.AssignmentCreateResult
 import com.freewheelin.pulley.assignment.application.port.AssignmentCreateUseCase
+import com.freewheelin.pulley.assignment.application.port.SubmissionGradeUseCase
 import com.freewheelin.pulley.common.exception.AuthorizationException
 import com.freewheelin.pulley.common.exception.ErrorCode
 import com.freewheelin.pulley.common.exception.NotFoundException
@@ -37,6 +38,9 @@ class AssignmentControllerTest {
     
     @MockkBean
     private lateinit var assignmentCreateUseCase: AssignmentCreateUseCase
+
+    @MockkBean
+    private lateinit var submissionGradeUseCase: SubmissionGradeUseCase
     
     @MockkBean
     private lateinit var securityService: SecurityService
