@@ -2,14 +2,14 @@ spring:
   application:
     name: pulley
 
-  # H2 Database ??
+  # H2 Database 설정
   datasource:
     url: jdbc:h2:mem:demo2db;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
-    password: password
+    password:
 
-  # H2 Console ?? (???)
+  # H2 Console 설정 (개발용)
   h2:
     console:
       enabled: true
@@ -17,11 +17,11 @@ spring:
       settings:
         web-allow-others: false
 
-  # JPA / Hibernate ??
+  # JPA / Hibernate 설정
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
@@ -31,12 +31,12 @@ spring:
           batch_size: 20
     open-in-view: false
 
-  # SQL ??? ??
+  # SQL 초기화 설정
   sql:
     init:
-      mode: always
+      mode: never
 
-# ?? ??
+# 서버 설정
 server:
   port: 8080
   servlet:
@@ -46,7 +46,7 @@ server:
       enabled: true
       force: true
 
-# ?? ??
+# 로깅 설정
 logging:
   level:
     com.freewheelin.pulley: DEBUG
