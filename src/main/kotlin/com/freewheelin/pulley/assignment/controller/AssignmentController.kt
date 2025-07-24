@@ -55,7 +55,7 @@ class AssignmentController(
      * @param request 답안 제출 요청 정보
      * @return 채점 결과 정보
      */
-    @PutMapping("/{pieceId}/score")
+    @PutMapping("/piece/{pieceId}/score")
     @PreAuthorize("hasAnyRole('TEACHER', 'STUDENT')")
     fun submitAndGrade(
         @PathVariable @Positive pieceId: Long,
