@@ -34,4 +34,65 @@ class PieceProblemPersistenceAdapter(
             .map { it.toDomain() }
     }
 
+    override fun findProblemsForOrderUpdate(
+        pieceId: Long,
+        problemId: Long,
+        prevProblemId: Long?,
+        nextProblemId: Long?
+    ): List<PieceProblem> {
+        // 1단계: 지정된 문제들(target, prev, next)을 먼저 조회하여 position 값을 얻음
+        val targetProblemIds = listOfNotNull(problemId, prevProblemId, nextProblemId)
+        val specifiedProblems = pieceProblemJpaRepository.findByPieceIdAndProblemIdIn(pieceId, targetProblemIds)
+
+        // position 값 추출
+        val prevPosition = prevProblemId?.let { id ->
+            specifiedProblems.find { it.problemId == id }?.position
+        }
+        val nextPosition = nextProblemId?.let { id ->
+            specifiedProblems.find { it.problemId == id }?.position
+        }
+
+        // 2단계: 최적화된 쿼리로 필요한 모든 문제들 조회
+        return pieceProblemJpaRepository.findProblemsForOrderUpdate(
+            pieceId = pieceId,
+            targetProblemId = problemId,
+            prevProblemId = prevProblemId,
+            nextProblemId = nextProblemId,
+            prevPosition = prevPosition,
+            nextPosition = nextPosition
+        ).map { it.toDomain() }
+    }
+
+    override fun findPieceProblemsForOrderUpdate(
+        pieceId: Long,
+        pieceProblemId: Long,
+        prevPieceProblemId: Long?,
+        nextPieceProblemId: Long?
+    ): List<PieceProblem> {
+        // 1단계: 지정된 PieceProblem들(target, prev, next)을 먼저 조회하여 position 값을 얻음
+        val targetPieceProblemIds = listOfNotNull(pieceProblemId, prevPieceProblemId, nextPieceProblemId)
+        val specifiedProblems = if (targetPieceProblemIds.isNotEmpty()) {
+            pieceProblemJpaRepository.findAllById(targetPieceProblemIds)
+        } else {
+            emptyList()
+        }
+
+        // position 값 추출
+        val prevPosition = prevPieceProblemId?.let { id ->
+            specifiedProblems.find { it.id == id }?.position
+        }
+        val nextPosition = nextPieceProblemId?.let { id ->
+            specifiedProblems.find { it.id == id }?.position
+        }
+
+        // 2단계: 최적화된 쿼리로 필요한 모든 PieceProblem들 조회
+        return pieceProblemJpaRepository.findPieceProblemsForOrderUpdate(
+            pieceId = pieceId,
+            targetPieceProblemId = pieceProblemId,
+            prevPieceProblemId = prevPieceProblemId,
+            nextPieceProblemId = nextPieceProblemId,
+            prevPosition = prevPosition,
+            nextPosition = nextPosition
+        ).map { it.toDomain() }
+    }
 } 
