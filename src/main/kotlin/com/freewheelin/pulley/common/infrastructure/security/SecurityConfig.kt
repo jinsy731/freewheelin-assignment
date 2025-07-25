@@ -62,6 +62,13 @@ class SecurityConfig(
                         "/js/**",
                         "/images/**",
                         "/favicon.ico",
+                        // Swagger UI 관련 경로
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/api-docs/**",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/webjars/**"
                     ).permitAll()
 
                     .requestMatchers(toH2Console()).permitAll()

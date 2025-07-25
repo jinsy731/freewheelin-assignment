@@ -3,6 +3,7 @@ package com.freewheelin.pulley.common.presentation
 import com.freewheelin.pulley.common.exception.BaseException
 import com.freewheelin.pulley.common.exception.ErrorCode
 import com.freewheelin.pulley.common.exception.ValidationException
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.ConstraintViolationException
 import mu.KotlinLogging
 import org.springframework.http.HttpStatus
@@ -377,11 +378,17 @@ class GlobalExceptionHandler {
  * 
  * ErrorCode 기반의 일관된 응답 구조를 제공합니다.
  */
+@Schema(description = "에러 응답")
 data class ErrorResponse(
+    @Schema(description = "에러 코드", example = "VAL001")
     val errorCode: String,
+    @Schema(description = "에러 메시지", example = "입력값 검증에 실패했습니다")
     val message: String,
+    @Schema(description = "상세 에러 정보", example = "[\"title: 학습지 이름은 필수입니다\"]")
     val details: List<String> = emptyList(),
+    @Schema(description = "에러 발생 시간", example = "2025-07-25T18:30:00")
     val timestamp: LocalDateTime = LocalDateTime.now(),
+    @Schema(description = "요청 경로", example = "/piece")
     val path: String? = null
 ) {
     companion object {

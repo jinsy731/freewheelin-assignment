@@ -27,6 +27,9 @@ dependencies {
 	// Kotlin Core
 	implementation(libs.bundles.kotlin.core)
 
+	// Documentation
+	implementation(libs.springdoc.openapi.starter.webmvc.ui)
+
 	// Database
 	runtimeOnly(libs.h2.database)
 

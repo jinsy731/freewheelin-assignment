@@ -22,23 +22,11 @@ import org.springframework.web.bind.annotation.*
 class ProblemController(
     private val problemSearchUseCase: ProblemSearchUseCase,
     private val securityService: SecurityService
-) {
+) : ProblemApiSpec {
     
-    /**
-     * 문제 조회 API (선생님과 학생 모두 접근 가능)
-     * 
-     * 선생님: 모든 정보 포함 (정답 포함)
-     * 학생: 정답 정보 제외
-     * 
-     * @param totalCount 총 문제 수
-     * @param unitCodeList 유형코드 리스트 (쉼표 구분)
-     * @param level 난이도
-     * @param problemType 문제 유형 (ALL, SUBJECTIVE, SELECTION)
-     * @return 조회된 문제 리스트
-     */
     @GetMapping
     @PreAuthorize("hasAnyRole('TEACHER')")
-    fun getProblems(
+    override fun getProblems(
         @RequestParam(name = "totalCount", required = true) @NotNull @Min(1) totalCount: Int,
         @RequestParam(name = "unitCodeList", required = true) @NotBlank unitCodeList: String,
         @RequestParam(name = "level", required = true) @NotNull level: Level,
