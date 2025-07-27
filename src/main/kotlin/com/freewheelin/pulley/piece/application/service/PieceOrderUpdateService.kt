@@ -1,12 +1,13 @@
 package com.freewheelin.pulley.piece.application.service
 
-import com.freewheelin.pulley.common.domain.ProblemId
+import com.freewheelin.pulley.common.domain.Position
 import com.freewheelin.pulley.common.exception.ErrorCode
 import com.freewheelin.pulley.common.exception.NotFoundException
 import com.freewheelin.pulley.piece.application.port.PieceOrderUpdateUseCase
 import com.freewheelin.pulley.piece.application.port.ProblemOrderUpdateCommand
 import com.freewheelin.pulley.piece.application.port.ProblemOrderUpdateResult
-import com.freewheelin.pulley.piece.domain.model.PieceProblems
+import com.freewheelin.pulley.piece.domain.model.PieceProblem
+import com.freewheelin.pulley.piece.domain.model.PieceProblemOrder
 import com.freewheelin.pulley.piece.domain.port.PieceProblemRepository
 import com.freewheelin.pulley.piece.domain.port.PieceRepository
 import org.springframework.stereotype.Service
@@ -14,9 +15,6 @@ import org.springframework.transaction.annotation.Transactional
 
 /**
  * 학습지 문제 순서 변경 Application Service
- * 
- * "사이" 위치 지정 방식으로 문제 순서를 변경합니다.
- * 성능 최적화: 필요한 문제들을 한 번에 조회하고 오직 1개 문제만 업데이트합니다.
  */
 @Service
 @Transactional
@@ -25,10 +23,35 @@ class PieceOrderUpdateService(
     private val pieceProblemRepository: PieceProblemRepository
 ) : PieceOrderUpdateUseCase {
 
+    /**
+     * 문제 순서 업데이트
+     * 1.Piece 소유권 검증
+     * 2. 변경할 문제, 앞/뒤 문제 조회 (+ 앞/뒤 문제 사이에 있는 문제 조회 for 연속성 검증)
+     * 3.
+     */
     override fun updateProblemOrder(command: ProblemOrderUpdateCommand): ProblemOrderUpdateResult {
+        validatePieceOwnership(command)
+        
+        val requiredProblems = fetchRequiredProblems(command)
+        val pieceProblemOrder = PieceProblemOrder.of(requiredProblems)
+        
+        val originalPosition = getOriginalPosition(pieceProblemOrder, command.pieceProblemId)
+        val newPosition = updateProblemPosition(pieceProblemOrder, command, originalPosition)
+        
+        return ProblemOrderUpdateResult.success(
+            pieceId = command.pieceId,
+            pieceProblemId = command.pieceProblemId,
+            previousPosition = originalPosition.value,
+            newPosition = newPosition.value
+        )
+    }
+
+    private fun validatePieceOwnership(command: ProblemOrderUpdateCommand) {
         val piece = pieceRepository.getById(command.pieceId)
         piece.validateOwnership(command.teacherId)
+    }
 
+    private fun fetchRequiredProblems(command: ProblemOrderUpdateCommand): List<PieceProblem> {
         val requiredProblems = pieceProblemRepository.findPieceProblemsForOrderUpdate(
             pieceId = command.pieceId,
             pieceProblemId = command.pieceProblemId,
@@ -43,31 +66,31 @@ class PieceOrderUpdateService(
             )
         }
 
-        val pieceProblems = PieceProblems.of(requiredProblems)
-        val problemToMove = pieceProblems.getByPieceProblemId(command.pieceProblemId) // 존재 확인
-        val originalPosition = problemToMove.position.value
+        return requiredProblems
+    }
 
-        val updatedProblem = pieceProblems.moveOrderTo(
+    private fun getOriginalPosition(pieceProblemOrder: PieceProblemOrder, pieceProblemId: Long): Position {
+        return pieceProblemOrder
+            .getByPieceProblemId(pieceProblemId)
+            .position
+    }
+
+    private fun updateProblemPosition(
+        pieceProblemOrder: PieceProblemOrder,
+        command: ProblemOrderUpdateCommand,
+        originalPosition: Position
+    ): Position {
+        val updatedProblem = pieceProblemOrder.moveOrderTo(
             pieceProblemId = command.pieceProblemId,
             prevPieceProblemId = command.prevPieceProblemId,
             nextPieceProblemId = command.nextPieceProblemId
         )
 
-        // 6. 변경사항이 있는 경우에만 저장
-        val newPosition = if (updatedProblem != null) {
+        return updatedProblem?.let{
             pieceProblemRepository.save(updatedProblem)
-            updatedProblem.position.value
-        } else {
-            originalPosition // 변경 불필요
-        }
-
-        // 7. 결과 반환
-        return ProblemOrderUpdateResult(
-            pieceId = command.pieceId,
-            pieceProblemId = command.pieceProblemId,
-            previousPosition = originalPosition,
-            newPosition = newPosition,
-            success = true
-        )
+            updatedProblem.position
+        } ?: originalPosition
     }
+
+
 }
