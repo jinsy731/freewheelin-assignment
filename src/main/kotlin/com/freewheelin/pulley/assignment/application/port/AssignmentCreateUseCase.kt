@@ -50,4 +50,21 @@ data class AssignmentCreateResult(
 ) {
     val isAllStudentsProcessed: Boolean
         get() = newlyAssignedStudents + alreadyAssignedStudents == totalRequestedStudents
+    
+    companion object {
+        fun from(
+            request: AssignmentCreateRequest,
+            alreadyAssignedStudentIds: List<Long>,
+            newlyAssignedStudentIds: List<Long>
+        ): AssignmentCreateResult {
+            return AssignmentCreateResult(
+                pieceId = request.pieceId,
+                totalRequestedStudents = request.studentIds.size,
+                newlyAssignedStudents = newlyAssignedStudentIds.size,
+                alreadyAssignedStudents = alreadyAssignedStudentIds.size,
+                newlyAssignedStudentIds = newlyAssignedStudentIds,
+                alreadyAssignedStudentIds = alreadyAssignedStudentIds
+            )
+        }
+    }
 } 
