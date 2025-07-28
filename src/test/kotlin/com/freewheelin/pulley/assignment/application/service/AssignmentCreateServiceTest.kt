@@ -257,7 +257,7 @@ class AssignmentCreateServiceTest {
             assignmentCreateService.assignPiece(request)
         }
         
-        assertEquals(ErrorCode.PIECE_UNAUTHORIZED, exception.errorCode)
+        assertEquals(ErrorCode.UNAUTHORIZED_ACCESS, exception.errorCode)
     }
     
     @Test

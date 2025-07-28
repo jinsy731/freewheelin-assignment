@@ -3,6 +3,7 @@ package com.freewheelin.pulley.piece.domain.model
 import com.freewheelin.pulley.common.domain.PieceId
 import com.freewheelin.pulley.common.domain.PieceName
 import com.freewheelin.pulley.common.domain.TeacherId
+import com.freewheelin.pulley.common.domain.validateOwnership
 import com.freewheelin.pulley.common.exception.AuthorizationException
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

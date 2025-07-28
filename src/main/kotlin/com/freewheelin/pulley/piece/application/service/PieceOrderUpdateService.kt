@@ -1,6 +1,7 @@
 package com.freewheelin.pulley.piece.application.service
 
 import com.freewheelin.pulley.common.domain.Position
+import com.freewheelin.pulley.common.domain.validateOwnership
 import com.freewheelin.pulley.common.exception.ErrorCode
 import com.freewheelin.pulley.common.exception.NotFoundException
 import com.freewheelin.pulley.piece.application.port.PieceOrderUpdateUseCase

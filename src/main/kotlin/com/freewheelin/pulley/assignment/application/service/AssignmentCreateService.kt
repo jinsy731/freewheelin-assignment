@@ -8,6 +8,7 @@ import com.freewheelin.pulley.assignment.domain.port.AssignmentRepository
 import com.freewheelin.pulley.piece.domain.port.PieceRepository
 import com.freewheelin.pulley.common.domain.PieceId
 import com.freewheelin.pulley.common.domain.StudentId
+import com.freewheelin.pulley.common.domain.validateOwnership
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

@@ -1,5 +1,6 @@
 package com.freewheelin.pulley.piece.application.service
 
+import com.freewheelin.pulley.common.domain.validateOwnership
 import com.freewheelin.pulley.piece.application.port.*
 import com.freewheelin.pulley.piece.domain.port.PieceRepository
 import com.freewheelin.pulley.statistics.domain.port.PieceProblemStatRepository
