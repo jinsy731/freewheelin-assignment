@@ -9,6 +9,8 @@ mockk = "1.13.8"
 springmockk = "4.0.2"
 kotlin-logging = "3.0.5"
 springdoc-openapi = "2.6.0"
+kotest = "5.8.0"
+fixture-monkey = "1.0.23"
 
 [libraries]
 # Spring Boot
@@ -37,10 +39,16 @@ springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openap
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 springmockk = { module = "com.ninja-squad:springmockk", version.ref = "springmockk" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+
+# Fixture Monkey
+fixture-monkey-starter = { module = "com.navercorp.fixturemonkey:fixture-monkey-starter", version.ref = "fixture-monkey" }
+fixture-monkey-kotlin = { module = "com.navercorp.fixturemonkey:fixture-monkey-kotlin", version.ref = "fixture-monkey" }
+fixture-monkey-jackson = { module = "com.navercorp.fixturemonkey:fixture-monkey-jackson", version.ref = "fixture-monkey" }
 
 [bundles]
 spring-boot-starter = ["spring-boot-starter-data-jpa", "spring-boot-starter-validation", "spring-boot-starter-web", "spring-boot-starter-security"]
-spring-boot-test = ["spring-boot-starter-test", "spring-security-test", "kotlin-test-junit5", "mockk", "springmockk"]
+spring-boot-test = ["spring-boot-starter-test", "spring-security-test", "kotlin-test-junit5", "mockk", "springmockk", "kotest-assertions-core", "fixture-monkey-starter", "fixture-monkey-kotlin", "fixture-monkey-jackson"]
 kotlin-core = ["kotlin-reflect", "jackson-module-kotlin", "kotlin-logging"]
 
 [plugins]
