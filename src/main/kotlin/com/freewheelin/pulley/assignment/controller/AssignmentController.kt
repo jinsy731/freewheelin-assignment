@@ -24,17 +24,11 @@ class AssignmentController(
     private val assignmentCreateUseCase: AssignmentCreateUseCase,
     private val submissionGradeUseCase: SubmissionGradeUseCase,
     private val securityService: SecurityService
-) {
+) : AssignmentApiSpec {
     
-    /**
-     * 학습지 출제 API (선생님 전용)
-     * 
-     * @param request 학습지 출제 요청 정보
-     * @return 출제 결과 정보
-     */
     @PostMapping("/piece/{pieceId}")
     @PreAuthorize("hasRole('TEACHER')")
-    fun assignPiece(
+    override fun assignPiece(
         @PathVariable @Positive pieceId: Long,
         @Valid @RequestBody request: AssignmentCreateRequestDto
     ): ResponseEntity<AssignmentCreateResponseDto> {
@@ -46,18 +40,9 @@ class AssignmentController(
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
-    /**
-     * 답안 제출 및 자동 채점 API (선생님과 학생 모두 접근 가능)
-     *
-     * 학생이 제출한 답안을 자동으로 채점하고 정답률을 계산합니다.
-     *
-     * @param pieceId 학습지 ID
-     * @param request 답안 제출 요청 정보
-     * @return 채점 결과 정보
-     */
     @PutMapping("/piece/{pieceId}/score")
     @PreAuthorize("hasAnyRole('TEACHER', 'STUDENT')")
-    fun submitAndGrade(
+    override fun submitAndGrade(
         @PathVariable @Positive pieceId: Long,
         @Valid @RequestBody request: SubmissionGradeRequestDto
     ): ResponseEntity<SubmissionGradeResponseDto> {

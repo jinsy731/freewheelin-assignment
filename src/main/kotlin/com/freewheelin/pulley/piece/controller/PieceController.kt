@@ -22,17 +22,11 @@ class PieceController(
     private val pieceProblemsQueryUseCase: PieceProblemsQueryUseCase,
     private val pieceAnalysisUseCase: PieceAnalysisUseCase,
     private val securityService: SecurityService
-) {
+) : PieceApiSpec {
     
-    /**
-     * 학습지 생성 API (선생님 전용)
-     * 
-     * @param request 학습지 생성 요청 정보
-     * @return 생성된 학습지 정보
-     */
     @PostMapping
     @PreAuthorize("hasRole('TEACHER')")
-    fun createPiece(@Valid @RequestBody request: PieceCreateRequestDto): ResponseEntity<PieceCreateResponseDto> {
+    override fun createPiece(@Valid @RequestBody request: PieceCreateRequestDto): ResponseEntity<PieceCreateResponseDto> {
         val currentUserId = securityService.requireCurrentUserId()
         val createRequest = request.toUseCaseRequest(currentUserId)
         val result = pieceCreateUseCase.createPiece(createRequest)
@@ -41,16 +35,9 @@ class PieceController(
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
     
-    /**
-     * 학습지 문제 순서 수정 API (선생님 전용)
-     * 
-     * @param pieceId 학습지 ID
-     * @param request 문제 순서 수정 요청 정보  
-     * @return 수정 완료 응답
-     */
     @PatchMapping("/{pieceId}/order")
     @PreAuthorize("hasRole('TEACHER')")
-    fun updateProblemOrder(
+    override fun updateProblemOrder(
         @PathVariable @Positive pieceId: Long,
         @Valid @RequestBody request: ProblemOrderUpdateRequestDto
     ): ResponseEntity<Void> {
@@ -61,15 +48,9 @@ class PieceController(
         return ResponseEntity.ok().build()
     }
     
-    /**
-     * 학습지 문제 목록 조회 API (선생님과 학생 모두 접근 가능)
-     * 
-     * @param pieceId 학습지 ID
-     * @return 학습지 문제 목록
-     */
     @GetMapping("/{pieceId}/problems")
     @PreAuthorize("hasAnyRole('TEACHER', 'STUDENT')")
-    fun getProblems(
+    override fun getProblems(
         @PathVariable @Positive pieceId: Long
     ): ResponseEntity<PieceProblemsResponseDto> {
         val currentUserId = securityService.requireCurrentUserId()
@@ -80,15 +61,9 @@ class PieceController(
         return ResponseEntity.ok(response)
     }
     
-    /**
-     * 학습지 분석 API (선생님 전용)
-     * 
-     * @param pieceId 학습지 ID
-     * @return 학습지 분석 결과
-     */
     @GetMapping("/{pieceId}/analysis")
     @PreAuthorize("hasRole('TEACHER')")
-    fun analyzePiece(
+    override fun analyzePiece(
         @PathVariable @Positive pieceId: Long
     ): ResponseEntity<PieceAnalysisResponseDto> {
         val currentUserId = securityService.requireCurrentUserId()

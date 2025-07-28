@@ -1,6 +1,6 @@
 [versions]
 kotlin = "1.9.25"
-spring-boot = "3.5.3"
+spring-boot = "3.3.5"
 spring-dependency-management = "1.1.7"
 java = "21"
 jackson = "2.17.2"
@@ -8,6 +8,7 @@ h2 = "2.2.220"
 mockk = "1.13.8"
 springmockk = "4.0.2"
 kotlin-logging = "3.0.5"
+springdoc-openapi = "2.6.0"
 
 [libraries]
 # Spring Boot
@@ -28,6 +29,9 @@ jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-
 
 # Database
 h2-database = { module = "com.h2database:h2", version.ref = "h2" }
+
+# Documentation
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
 
 # Test
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
