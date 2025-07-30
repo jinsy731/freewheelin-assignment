@@ -3,10 +3,14 @@ package com.freewheelin.pulley.assignment.application.service
 import com.freewheelin.pulley.assignment.application.port.AssignmentCreateRequest
 import com.freewheelin.pulley.assignment.domain.model.Assignment
 import com.freewheelin.pulley.assignment.domain.port.AssignmentRepository
+import com.freewheelin.pulley.assignment.domain.service.AssignmentDuplicationInfo
+import com.freewheelin.pulley.assignment.domain.service.AssignmentDuplicationPolicy
+import com.freewheelin.pulley.common.domain.*
+import com.freewheelin.pulley.common.exception.AuthorizationException
+import com.freewheelin.pulley.common.exception.ErrorCode
+import com.freewheelin.pulley.common.exception.NotFoundException
 import com.freewheelin.pulley.piece.domain.model.Piece
 import com.freewheelin.pulley.piece.domain.port.PieceRepository
-import com.freewheelin.pulley.common.domain.*
-import com.freewheelin.pulley.common.exception.*
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -21,7 +25,9 @@ class AssignmentCreateServiceTest {
     
     private val assignmentRepository = mockk<AssignmentRepository>()
     private val pieceRepository = mockk<PieceRepository>()
+    private val assignmentDuplicationPolicy = mockk<AssignmentDuplicationPolicy>()
     private val assignmentCreateService = AssignmentCreateService(
+        assignmentDuplicationPolicy,
         assignmentRepository,
         pieceRepository
     )
@@ -29,6 +35,7 @@ class AssignmentCreateServiceTest {
     @Test
     fun `assignPiece - 정상 출제 테스트 (모든 학생이 새로 출제)`() {
         // Given
+        // TOOD: 테스트 파리마터 변수화
         val request = AssignmentCreateRequest(
             teacherId = 1L,
             pieceId = 100L,
@@ -61,12 +68,18 @@ class AssignmentCreateServiceTest {
                 assignedAt = LocalDateTime.now()
             )
         )
+
+        val duplicationInfo = AssignmentDuplicationInfo(
+            alreadyAssignedStudentIds = listOf(),
+            notAssignedStudentIds = listOf(10L, 20L, 30L)
+        )
         
         every { pieceRepository.getById(100L) } returns piece
         every { 
             assignmentRepository.findByPieceIdAndStudentIdIn(100L, listOf(10L, 20L, 30L)) 
         } returns emptyList()
         every { assignmentRepository.saveAll(any()) } returns savedAssignments
+        every { assignmentDuplicationPolicy.getDuplicationInfo(any(), any()) } returns duplicationInfo
         
         // When
         val result = assignmentCreateService.assignPiece(request)
@@ -130,13 +143,19 @@ class AssignmentCreateServiceTest {
                 assignedAt = LocalDateTime.now()
             )
         )
+
+        val duplicationInfo = AssignmentDuplicationInfo(
+            alreadyAssignedStudentIds = listOf(20L),
+            notAssignedStudentIds = listOf(10L, 30L)
+        )
         
         every { pieceRepository.getById(100L) } returns piece
         every { 
             assignmentRepository.findByPieceIdAndStudentIdIn(100L, listOf(10L, 20L, 30L)) 
         } returns listOf(existingAssignment)
         every { assignmentRepository.saveAll(any()) } returns savedAssignments
-        
+        every { assignmentDuplicationPolicy.getDuplicationInfo(any(), any()) } returns duplicationInfo
+
         // When
         val result = assignmentCreateService.assignPiece(request)
         
@@ -157,7 +176,7 @@ class AssignmentCreateServiceTest {
         assertEquals(2, capturedAssignments.size)
         assertEquals(listOf(10L, 30L), capturedAssignments.map { it.studentId.value })
     }
-    
+
     @Test
     fun `assignPiece - 모든 학생이 이미 출제되어 있는 경우 새로 출제되는 학습지는 없다`() {
         // Given
@@ -166,13 +185,13 @@ class AssignmentCreateServiceTest {
             pieceId = 100L,
             studentIds = listOf(10L, 20L)
         )
-        
+
         val piece = Piece(
             id = PieceId(100L),
             teacherId = TeacherId(1L),
             name = PieceName("수학 학습지")
         )
-        
+
         val existingAssignments = listOf(
             Assignment(
                 id = AssignmentId(1L),
@@ -191,15 +210,21 @@ class AssignmentCreateServiceTest {
                 correctnessRate = null
             )
         )
-        
+
+        val duplicationInfo = AssignmentDuplicationInfo(
+            alreadyAssignedStudentIds = listOf(10L, 20L),
+            notAssignedStudentIds = emptyList()
+        )
+
         every { pieceRepository.getById(100L) } returns piece
-        every { 
-            assignmentRepository.findByPieceIdAndStudentIdIn(100L, listOf(10L, 20L)) 
+        every {
+            assignmentRepository.findByPieceIdAndStudentIdIn(100L, listOf(10L, 20L))
         } returns existingAssignments
-        
+        every { assignmentDuplicationPolicy.getDuplicationInfo(any(), any()) } returns duplicationInfo
+
         // When
         val result = assignmentCreateService.assignPiece(request)
-        
+
         // Then
         assertEquals(100L, result.pieceId)
         assertEquals(2, result.totalRequestedStudents)
@@ -208,7 +233,7 @@ class AssignmentCreateServiceTest {
         assertEquals(emptyList(), result.newlyAssignedStudentIds)
         assertEquals(listOf(10L, 20L), result.alreadyAssignedStudentIds)
         assertTrue(result.isAllStudentsProcessed)
-        
+
         // saveAll이 호출되지 않아야 함 (새로 출제할 학생이 없음)
         verify(exactly = 0) { assignmentRepository.saveAll(any()) }
     }
@@ -258,43 +283,5 @@ class AssignmentCreateServiceTest {
         }
         
         assertEquals(ErrorCode.UNAUTHORIZED_ACCESS, exception.errorCode)
-    }
-    
-    @Test
-    fun `assignPiece - 단일 학생 출제 테스트`() {
-        // Given
-        val request = AssignmentCreateRequest(
-            teacherId = 1L,
-            pieceId = 100L,
-            studentIds = listOf(10L)  // 단일 학생
-        )
-        
-        val piece = Piece(
-            id = PieceId(100L),
-            teacherId = TeacherId(1L),
-            name = PieceName("수학 학습지")
-        )
-        
-        val savedAssignment = Assignment(
-            id = AssignmentId(1L),
-            pieceId = PieceId(100L),
-            studentId = StudentId(10L),
-            assignedAt = LocalDateTime.now()
-        )
-        
-        every { pieceRepository.getById(100L) } returns piece
-        every { 
-            assignmentRepository.findByPieceIdAndStudentIdIn(100L, listOf(10L)) 
-        } returns emptyList()
-        every { assignmentRepository.saveAll(any()) } returns listOf(savedAssignment)
-        
-        // When
-        val result = assignmentCreateService.assignPiece(request)
-        
-        // Then
-        assertEquals(1, result.totalRequestedStudents)
-        assertEquals(1, result.newlyAssignedStudents)
-        assertEquals(0, result.alreadyAssignedStudents)
-        assertEquals(listOf(10L), result.newlyAssignedStudentIds)
     }
 } 

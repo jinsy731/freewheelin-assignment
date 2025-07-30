@@ -4,13 +4,14 @@ import com.freewheelin.pulley.assignment.application.port.AssignmentCreateReques
 import com.freewheelin.pulley.assignment.application.port.AssignmentCreateResult
 import com.freewheelin.pulley.assignment.application.port.AssignmentCreateUseCase
 import com.freewheelin.pulley.assignment.domain.model.Assignment
-import com.freewheelin.pulley.assignment.domain.model.AssignmentDuplicateInfo
 import com.freewheelin.pulley.assignment.domain.port.AssignmentRepository
-import com.freewheelin.pulley.piece.domain.model.Piece
-import com.freewheelin.pulley.piece.domain.port.PieceRepository
+import com.freewheelin.pulley.assignment.domain.service.AssignmentDuplicationInfo
+import com.freewheelin.pulley.assignment.domain.service.AssignmentDuplicationPolicy
 import com.freewheelin.pulley.common.domain.PieceId
 import com.freewheelin.pulley.common.domain.StudentId
 import com.freewheelin.pulley.common.domain.validateOwnership
+import com.freewheelin.pulley.piece.domain.model.Piece
+import com.freewheelin.pulley.piece.domain.port.PieceRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -23,6 +24,7 @@ private val logger = KotlinLogging.logger {}
 @Service
 @Transactional
 class AssignmentCreateService(
+    private val assignmentDuplicationPolicy: AssignmentDuplicationPolicy,
     private val assignmentRepository: AssignmentRepository,
     private val pieceRepository: PieceRepository
 ) : AssignmentCreateUseCase {
@@ -32,12 +34,12 @@ class AssignmentCreateService(
         
         return try {
             validatePieceOwnership(request.pieceId, request.teacherId)
-            val duplicateInfo = checkDuplicateAssignments(request.pieceId, request.studentIds)
+            val duplicateInfo = assignmentDuplicationPolicy.getDuplicationInfo(request.pieceId, request.studentIds)
             val savedAssignments = createAndSaveNewAssignments(request.pieceId, duplicateInfo)
             
             AssignmentCreateResult.from(
                 request = request,
-                alreadyAssignedStudentIds = duplicateInfo.alreadyAssignedStudentIds.map { it.toLong() },
+                alreadyAssignedStudentIds = duplicateInfo.alreadyAssignedStudentIds,
                 newlyAssignedStudentIds = savedAssignments.map { it.studentId.value }
             ).also { result ->
                 logAssignmentCompletion(result)
@@ -55,32 +57,16 @@ class AssignmentCreateService(
         return piece
     }
     
-    private fun checkDuplicateAssignments(pieceId: Long, studentIds: List<Long>): AssignmentDuplicateInfo {
-        val existingAssignments = assignmentRepository.findByPieceIdAndStudentIdIn(pieceId, studentIds)
-        val duplicateInfo = AssignmentDuplicateInfo.from(studentIds.map { it.toString() }, existingAssignments)
-        
-        logger.info { 
-            "중복 출제 확인 완료 - pieceId: $pieceId, " +
-            "기존출제: ${duplicateInfo.existingStudentCount}명, 신규출제: ${duplicateInfo.newStudentCount}명" 
-        }
-        
-        if (duplicateInfo.hasExistingAssignments) {
-            logger.debug { "기존 출제 학생들: ${duplicateInfo.alreadyAssignedStudentIds}" }
-        }
-        
-        return duplicateInfo
-    }
-    
-    private fun createAndSaveNewAssignments(pieceId: Long, duplicateInfo: AssignmentDuplicateInfo): List<Assignment> {
-        if (!duplicateInfo.hasNewStudents) {
+    private fun createAndSaveNewAssignments(pieceId: Long, duplicationInfo: AssignmentDuplicationInfo): List<Assignment> {
+        if (!duplicationInfo.hasAssignableStudents()) {
             logger.info { "신규 출제할 학생 없음 - 모든 학생이 이미 출제됨" }
             return emptyList()
         }
         
-        val newAssignments = duplicateInfo.newStudentIds.map { studentId ->
+        val newAssignments = duplicationInfo.notAssignedStudentIds.map { studentId ->
             Assignment.create(
                 pieceId = PieceId(pieceId),
-                studentId = StudentId(studentId.toLong())
+                studentId = StudentId(studentId)
             )
         }
         
