@@ -2,6 +2,7 @@ package com.freewheelin.pulley.assignment.domain.model
 
 import com.freewheelin.pulley.common.domain.AssignmentId
 import com.freewheelin.pulley.common.domain.CorrectnessRate
+import com.freewheelin.pulley.common.domain.Ownable
 import com.freewheelin.pulley.common.domain.PieceId
 import com.freewheelin.pulley.common.domain.ProblemCount
 import com.freewheelin.pulley.common.domain.StudentId
@@ -21,7 +22,7 @@ data class Assignment(
     val assignedAt: LocalDateTime,
     val submittedAt: LocalDateTime? = null,
     val correctnessRate: CorrectnessRate? = null
-) {
+) : Ownable<Long> {
     
     /**
      * 제출 완료 처리
@@ -46,6 +47,16 @@ data class Assignment(
      * 제출 여부 확인
      */
     fun isSubmitted(): Boolean = submittedAt != null
+    
+    /**
+     * 소유자 확인 - Ownable 인터페이스 구현
+     */
+    override fun isOwnedBy(ownerId: Long): Boolean = studentId.value == ownerId
+    
+    /**
+     * 리소스 식별자 반환 - Ownable 인터페이스 구현
+     */
+    override fun getResourceId(): Any = id.value
     
     companion object {
         /**

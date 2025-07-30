@@ -1,10 +1,10 @@
 package com.freewheelin.pulley.piece.domain.model
 
+import com.freewheelin.pulley.common.domain.Ownable
 import com.freewheelin.pulley.common.domain.PieceId
 import com.freewheelin.pulley.common.domain.PieceName
 import com.freewheelin.pulley.common.domain.TeacherId
-import com.freewheelin.pulley.common.exception.AuthorizationException
-import com.freewheelin.pulley.common.exception.ErrorCode
+
 
 /**
  * 학습지 도메인 모델
@@ -15,33 +15,24 @@ data class Piece(
     val id: PieceId,
     val teacherId: TeacherId,
     val name: PieceName
-) {
+) : Ownable<Long> {
     
     /**
-     * 소유자 확인
+     * 소유자 확인 (TeacherId 타입)
      */
     fun isOwnedBy(targetTeacherId: TeacherId): Boolean =
         teacherId == targetTeacherId
     
     /**
-     * 소유자 확인 (Long 타입)
+     * 소유자 확인 (Long 타입) - Ownable 인터페이스 구현
      */
-    fun isOwnedBy(targetTeacherId: Long): Boolean = 
+    override fun isOwnedBy(targetTeacherId: Long): Boolean = 
         teacherId.value == targetTeacherId
     
     /**
-     * 소유권 검증 (실패시 예외)
+     * 리소스 식별자 반환 - Ownable 인터페이스 구현
      */
-    fun validateOwnership(targetTeacherId: Long) {
-        if (!isOwnedBy(targetTeacherId)) {
-            throw AuthorizationException(
-                ErrorCode.PIECE_UNAUTHORIZED,
-                targetTeacherId,
-                "Piece",
-                id.value
-            )
-        }
-    }
+    override fun getResourceId(): Any = id.value
 
     companion object {
         /**

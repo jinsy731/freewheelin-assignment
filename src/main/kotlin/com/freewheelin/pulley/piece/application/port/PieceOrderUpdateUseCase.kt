@@ -58,4 +58,21 @@ data class ProblemOrderUpdateResult(
     val previousPosition: Double,
     val newPosition: Double,
     val success: Boolean
-) 
+) {
+    companion object {
+        fun success(
+            pieceId: Long,
+            pieceProblemId: Long,
+            previousPosition: Double,
+            newPosition: Double
+        ): ProblemOrderUpdateResult {
+            return ProblemOrderUpdateResult(
+                pieceId = pieceId,
+                pieceProblemId = pieceProblemId,
+                previousPosition = previousPosition,
+                newPosition = newPosition,
+                success = true
+            )
+        }
+    }
+} 
