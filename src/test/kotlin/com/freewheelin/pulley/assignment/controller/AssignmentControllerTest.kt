@@ -216,7 +216,7 @@ class AssignmentControllerTest {
         )
         
         every { assignmentCreateUseCase.assignPiece(any()) } throws AuthorizationException(
-            ErrorCode.PIECE_UNAUTHORIZED,
+            ErrorCode.UNAUTHORIZED_ACCESS,
             1L,
             "Piece",
             2001L
@@ -230,7 +230,7 @@ class AssignmentControllerTest {
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.errorCode").value("P002"))
+            .andExpect(jsonPath("$.errorCode").value("E003"))
     }
     
     @Test

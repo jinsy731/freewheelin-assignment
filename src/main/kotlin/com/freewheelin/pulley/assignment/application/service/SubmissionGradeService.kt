@@ -10,13 +10,10 @@ import com.freewheelin.pulley.assignment.domain.model.SubmissionGradedEvent
 import com.freewheelin.pulley.assignment.domain.model.SubmissionResult
 import com.freewheelin.pulley.assignment.domain.port.AssignmentRepository
 import com.freewheelin.pulley.assignment.domain.port.SubmissionRepository
+import com.freewheelin.pulley.assignment.domain.service.SubmissionValidator
 import com.freewheelin.pulley.common.domain.CorrectnessRate
-import com.freewheelin.pulley.common.domain.ProblemCount
-import com.freewheelin.pulley.common.exception.BusinessRuleViolationException
 import com.freewheelin.pulley.common.exception.ErrorCode
-import com.freewheelin.pulley.common.exception.InvalidStateException
 import com.freewheelin.pulley.common.exception.NotFoundException
-import com.freewheelin.pulley.piece.domain.model.PieceProblem
 import com.freewheelin.pulley.piece.domain.port.PieceProblemRepository
 import com.freewheelin.pulley.problem.domain.model.Problem
 import com.freewheelin.pulley.problem.domain.port.ProblemRepository
@@ -25,13 +22,6 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import kotlin.collections.associateBy
-import kotlin.collections.count
-import kotlin.collections.isNotEmpty
-import kotlin.collections.map
-import kotlin.collections.minus
-import kotlin.collections.toList
-import kotlin.collections.toSet
 
 private val logger = KotlinLogging.logger {}
 
@@ -46,6 +36,7 @@ private val logger = KotlinLogging.logger {}
 class SubmissionGradeService(
     private val submissionRepository: SubmissionRepository,
     private val assignmentRepository: AssignmentRepository,
+    private val validator: SubmissionValidator,
     private val pieceProblemRepository: PieceProblemRepository,
     private val problemRepository: ProblemRepository,
     private val eventPublisher: ApplicationEventPublisher
@@ -59,11 +50,11 @@ class SubmissionGradeService(
         
         try {
             // 1. 기본 검증
-            val assignment = validateSubmissionRequest(request)
-            val pieceProblems = validatePieceProblems(request.pieceId)
-            
+            val assignment = validator.validateSubmissionDuplication(request)
+            val pieceProblems = validator.validatePieceProblems(request.pieceId)
+            val problems = validator.validateAndGetProblems(request, pieceProblems)
+
             // 2. 제출 답안 검증 및 채점
-            val problems = validateAndGetProblems(request, pieceProblems)
             val submissions = gradeSubmissions(request, assignment, problems)
             
             val correctCount = submissions.count { it.isCorrect }
@@ -89,79 +80,7 @@ class SubmissionGradeService(
             throw e
         }
     }
-    
-    /**
-     * 제출 요청의 기본 검증 (권한, 중복 제출)
-     */
-    private fun validateSubmissionRequest(request: SubmissionGradeRequest): Assignment {
-        logger.debug { "제출 요청 검증 시작 - pieceId: ${request.pieceId}, studentId: ${request.studentId}" }
-        
-        val assignment = assignmentRepository.getByPieceIdAndStudentId(
-            request.pieceId,
-            request.studentId
-        )
-        
-        if (assignment.isSubmitted()) {
-            logger.warn { 
-                "중복 제출 시도 - pieceId: ${request.pieceId}, studentId: ${request.studentId}, " +
-                "assignmentId: ${assignment.id.value}" 
-            }
-            throw InvalidStateException(
-                ErrorCode.ASSIGNMENT_ALREADY_SUBMITTED,
-                currentState = "이미 제출됨",
-                requestedAction = "답안 제출",
-                expectedState = "미제출 상태"
-            )
-        }
-        
-        logger.debug { "제출 요청 검증 완료 - assignmentId: ${assignment.id.value}" }
-        return assignment
-    }
-    
-    /**
-     * 학습지 문제 검증
-     */
-    private fun validatePieceProblems(pieceId: Long): List<PieceProblem> {
-        val pieceProblems = pieceProblemRepository.findByPieceIdOrderByPosition(pieceId)
-        if (pieceProblems.isEmpty()) {
-            logger.warn { "문제 없는 학습지 - pieceId: $pieceId" }
-            throw BusinessRuleViolationException(
-                ErrorCode.PIECE_NO_PROBLEMS,
-                "학습지에 문제가 없습니다.",
-                "학습지 ID: $pieceId"
-            )
-        }
-        
-        logger.debug { "학습지 문제 검증 완료 - pieceId: $pieceId, problemCount: ${pieceProblems.size}" }
-        return pieceProblems
-    }
-    
-    /**
-     * 제출된 문제 검증 및 문제 정보 조회
-     */
-    private fun validateAndGetProblems(
-        request: SubmissionGradeRequest,
-        pieceProblems: List<PieceProblem>
-    ): Map<Long, Problem> {
-        val validProblemIds = pieceProblems.map { it.problemId.value }.toSet()
-        val submittedProblemIds = request.answers.map { it.problemId }.toSet()
-        
-        val invalidProblemIds = submittedProblemIds - validProblemIds
-        if (invalidProblemIds.isNotEmpty()) {
-            logger.warn { 
-                "잘못된 문제 제출 - pieceId: ${request.pieceId}, invalidProblemIds: $invalidProblemIds" 
-            }
-            throw BusinessRuleViolationException(
-                ErrorCode.SUBMISSION_INVALID_PROBLEMS,
-                message = "해당 학습지에 포함되지 않은 문제가 있습니다: $invalidProblemIds"
-            )
-        }
-        
-        val problems = problemRepository.findByIds(submittedProblemIds.toList())
-        logger.debug { "문제 정보 조회 완료 - problemCount: ${problems.size}" }
-        return problems.associateBy { it.id }
-    }
-    
+
     /**
      * 답안 채점 처리
      */
@@ -208,9 +127,8 @@ class SubmissionGradeService(
             "과제 제출 상태 업데이트 - assignmentId: ${assignment.id.value}, " +
             "submissionCount: ${submissions.size}, totalProblems: $totalProblemsCount" 
         }
-        
-        val totalProblems = ProblemCount(totalProblemsCount)
-        val updatedAssignment = assignment.submit(submissions, totalProblems)
+
+        val updatedAssignment = assignment.submit(submissions)
         assignmentRepository.save(updatedAssignment)
         
         logger.debug { "과제 제출 완료 처리됨 - assignmentId: ${assignment.id.value}" }

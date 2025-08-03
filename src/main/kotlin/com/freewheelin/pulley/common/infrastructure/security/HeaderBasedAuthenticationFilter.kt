@@ -10,8 +10,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
 
-private val logger = KotlinLogging.logger {}
-
 /**
  * 헤더 기반 인증 필터
  * 
@@ -21,6 +19,8 @@ private val logger = KotlinLogging.logger {}
 class HeaderBasedAuthenticationFilter(
     private val userRepository: UserRepository
 ) : OncePerRequestFilter() {
+
+    private val logger = KotlinLogging.logger {}
 
     companion object {
         const val USER_ID_HEADER = "X-User-Id"
